@@ -42,6 +42,7 @@ namespace SupportCaseManagement.Module.BusinessObjects
         //public virtual int Id { get; set; }
 
         [Required, StringLength(50)]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public virtual string CaseNumber { get; set; } // Auto-generated
 
         [Required, StringLength(200)]

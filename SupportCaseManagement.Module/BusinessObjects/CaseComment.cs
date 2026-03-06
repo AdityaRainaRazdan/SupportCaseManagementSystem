@@ -33,7 +33,7 @@ namespace SupportCaseManagement.Module.BusinessObjects
         [Required]
         public virtual string Text { get; set; }
 
-        public virtual CommentType Type { get; set; }
+        public virtual CommentType CommentTypes { get; set; }
 
         [StringLength(100)]
         public virtual string CreatedBy { get; set; }

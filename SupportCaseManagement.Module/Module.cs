@@ -9,6 +9,7 @@ using DevExpress.ExpressApp.Model.DomainLogics;
 using DevExpress.ExpressApp.Model.NodeGenerators;
 using DevExpress.ExpressApp.Updating;
 using DevExpress.Persistent.Base;
+using SupportCaseManagement.Module.Services;
 
 namespace SupportCaseManagement.Module
 {
@@ -39,6 +40,7 @@ namespace SupportCaseManagement.Module
         {
             base.Setup(application);
             // Manage various aspects of the application UI and behavior at the module level.
+            application.ServiceProvider.GetService(typeof(AIService));
         }
     }
 }

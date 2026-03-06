@@ -1,20 +1,21 @@
 ﻿from fastapi import FastAPI
 from pydantic import BaseModel
-from langchain_openai import ChatOpenAI
+from langchain_openai import AzureChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 import os
 import json
 
 app = FastAPI()
 
-# Set API Key
-os.environ["OPENAI_API_KEY"] = ""
+# Azure OpenAI configuration
+os.environ["AZURE_OPENAI_API_KEY"] = ""
+os.environ["AZURE_OPENAI_ENDPOINT"] = "https://axcces-ai.openai.azure.com"
 
-llm = ChatOpenAI(model="gpt-4o-mini")
-
-# -------------------------
-# Request Model
-# -------------------------
+llm = AzureChatOpenAI(
+    azure_deployment="gpt-4o-mini",   # deployment name in Azure
+    api_version="2024-02-15-preview",
+    temperature=0
+)
 
 class CaseRequest(BaseModel):
     title: str
@@ -25,62 +26,76 @@ class CaseRequest(BaseModel):
     kb_articles: list[str]
 
 
-# -------------------------
-# Prompt Template
-# -------------------------
+prompt = ChatPromptTemplate.from_template("""
+You are an AI support assistant.
 
-prompt = ChatPromptTemplate.from_template(
-"""
-You are an AI assistant helping support agents manage cases.
+Analyze the support case and suggest improvements.
 
-CASE
-Title: {title}
-Description: {description}
-Status: {status}
-Priority: {priority}
+Return ONLY JSON in the following format:
 
-COMMENTS
+{{
+  "summary": "Short summary of the issue",
+  "plan": {{
+    "priority": "P1/P2/P3 or null",
+    "status": "New/InProgress/Resolved or null",
+    "assign_team": "Team name or null",
+    "kb_articles": []
+  }},
+  "reasoning": "Explanation of why the suggestion was made"
+}}
+
+Case Title:
+{title}
+
+Description:
+{description}
+
+Status:
+{status}
+
+Priority:
+{priority}
+
+Comments:
 {comments}
 
-KNOWLEDGE BASE
+Knowledge Base Articles:
 {kb}
 
-Analyze the case and return JSON:
+Return JSON only.
+""")
 
-{
-"summary": "...",
-"plan": {
-    "priority": "P1 | P2 | P3 | null",
-    "status": "New | Triage | InProgress | WaitingCustomer | Resolved | Closed | null",
-    "assign_team": "...",
-    "kb_articles": ["..."]
-},
-"reasoning": "Why these actions are recommended"
-}
-"""
-)
+# LangChain pipeline
+chain = prompt | llm
 
-# -------------------------
-# Endpoint
-# -------------------------
 
 @app.post("/analyze-case")
-async def analyze_case(data: CaseRequest):
-
-    formatted_prompt = prompt.format(
-        title=data.title,
-        description=data.description,
-        status=data.status,
-        priority=data.priority,
-        comments="\n".join(data.comments),
-        kb="\n".join(data.kb_articles)
-    )
-
-    result = llm.invoke(formatted_prompt)
-
+async def analyze_case(case: CaseRequest):
     try:
-        parsed = json.loads(result.content)
-    except:
-        parsed = {"summary": result.content}
+        result = chain.invoke({
+            "title": case.title,
+            "description": case.description,
+            "status": case.status,
+            "priority": case.priority,
+            "comments": case.comments,
+            "kb": case.kb_articles
+        })
 
-    return parsed
+        content = result.content
+
+        # Ensure valid JSON
+        parsed = json.loads(content)
+
+        return parsed
+
+    except Exception as e:
+        return {
+            "summary": "AI error",
+            "plan": {
+                "priority": None,
+                "status": None,
+                "assign_team": None,
+                "kb_articles": []
+            },
+            "reasoning": str(e)
+        }

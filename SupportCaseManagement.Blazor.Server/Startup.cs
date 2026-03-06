@@ -2,13 +2,11 @@
 using DevExpress.ExpressApp.Blazor.ApplicationBuilder;
 using DevExpress.ExpressApp.Blazor.Services;
 using DevExpress.ExpressApp.Security;
-using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF.PermissionPolicy;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.EntityFrameworkCore;
 using SupportCaseManagement.Blazor.Server.Services;
-using SupportCaseManagement.Blazor.Services;
 using SupportCaseManagement.Module.Services;
 
 namespace SupportCaseManagement.Blazor.Server

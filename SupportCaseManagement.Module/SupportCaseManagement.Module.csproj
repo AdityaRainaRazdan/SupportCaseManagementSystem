@@ -50,4 +50,7 @@
     </PackageReference>
     
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Agent\" />
+  </ItemGroup>
 </Project>
