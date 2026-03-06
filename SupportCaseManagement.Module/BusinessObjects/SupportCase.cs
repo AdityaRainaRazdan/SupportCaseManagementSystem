@@ -36,13 +36,45 @@ namespace SupportCaseManagement.Module.BusinessObjects
             KnowledgeLinks = new ObservableCollection<CaseKnowledgeLink>();
             ActionHistory = new ObservableCollection<CaseActionHistory>();
             Title = $"Case {DateTime.UtcNow:yyyyMMddHHmmss}";
+            CaseNumber = $"CASE-{DateTime.Now:yyyyMMddHHmmss}";
         }
+        public override void OnSaving()
+        {
+            base.OnSaving();
 
+            DateTime? newDueDate = null;
+
+            switch (Priority)
+            {
+                case CasePriority.P1:
+                    newDueDate = CreatedDate.AddDays(1);
+                    break;
+
+                case CasePriority.P2:
+                    newDueDate = CreatedDate.AddDays(3);
+                    break;
+
+                case CasePriority.P3:
+                    newDueDate = CreatedDate.AddDays(7);
+                    break;
+            }
+
+            // If SLA changed → update due date and log history
+            if (newDueDate.HasValue && DueDate != newDueDate)
+            {
+                DueDate = newDueDate;
+
+                var history = ObjectSpace.CreateObject<CaseActionHistory>();
+                history.Case = this;
+                history.ActionType = $"SLA recalculated because priority changed to {Priority}. New Due Date: {DueDate:yyyy-MM-dd}";
+                history.Timestamp = DateTime.UtcNow;
+            }
+        }
         //[Key]
         //public virtual int Id { get; set; }
 
         [Required, StringLength(50)]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+
         public virtual string CaseNumber { get; set; } // Auto-generated
 
         [Required, StringLength(200)]
