@@ -1,0 +1,117 @@
+﻿@* @using DevExpress.ExpressApp
+@using SupportCaseManagement.Module.BusinessObjects
+@using SupportCaseManagement.Module.Services
+@inject IObjectSpace ObjectSpace
+@inject AIService AIService
+
+<div class="ai-chat-panel border rounded p-3 bg-light">
+    <h5>🤖 AI Assistant</h5>
+
+    <div class="chat-history mb-2" style="max-height:200px; overflow-y:auto;">
+        @foreach (var log in Logs)
+        {
+            <div class="mb-1">
+                <b>@log.User:</b> @log.UserMessage <br />
+                <b>AI:</b> @log.AIResponse
+            </div>
+        }
+    </div>
+
+    <textarea class="form-control mb-2" @bind="UserMessage" placeholder="Type your question or request..."></textarea>
+    <button class="btn btn-primary mb-2" @onclick="SendMessage">Send</button>
+
+    @if (ProposedAction != null)
+    {
+        <div class="alert alert-warning mt-2">
+            <p><b>AI Proposed Action:</b> @ProposedAction</p>
+            <button class="btn btn-success btn-sm me-2" @onclick="ExecuteProposedAction">Execute</button>
+            <button class="btn btn-danger btn-sm" @onclick="RejectProposedAction">Reject</button>
+        </div>
+    }
+
+    @if (SuggestedArticles?.Any() == true)
+    {
+        <div class="mt-2">
+            <h6>Suggested Knowledge Base Articles:</h6>
+            <ul class="list-group">
+                @foreach (var article in SuggestedArticles)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>@article.Title</span>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => LinkArticle(article)">Link</button>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public SupportCase CurrentCase { get; set; }
+
+    private string UserMessage { get; set; }
+    private List<AIInteractionLog> Logs { get; set; } = new();
+    private string ProposedAction { get; set; }
+    private List<KnowledgeBaseArticle> SuggestedArticles { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        LoadLogs();
+    }
+
+    private void LoadLogs()
+    {
+        Logs = ObjectSpace.GetObjects<AIInteractionLog>()
+                .Where(l => l.SupportCaseId == CurrentCase.Id)
+                .OrderBy(l => l.Timestamp)
+                .ToList();
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(UserMessage)) return;
+
+        var response = await AIService.GetAIResponse(CurrentCase, UserMessage);
+
+        ProposedAction = response.ProposedPlan;
+        SuggestedArticles = response.SuggestedArticles;
+
+        var log = ObjectSpace.CreateObject<AIInteractionLog>();
+        log.Case = CurrentCase;
+        log.User = Environment.UserName;
+        log.UserMessage = UserMessage;
+        log.AIResponse = response.Summary;
+        log.ProposedPlan = ProposedAction;
+        ObjectSpace.CommitChanges();
+
+        UserMessage = string.Empty;
+        LoadLogs();
+    }
+
+    private void ExecuteProposedAction()
+    {
+        AIService.ApplyProposedAction(CurrentCase, ProposedAction, Environment.UserName);
+
+        var lastLog = Logs.LastOrDefault();
+        if (lastLog != null)
+        {
+            lastLog.ExecutedPlan = ProposedAction;
+            ObjectSpace.CommitChanges();
+        }
+
+        ProposedAction = null;
+        LoadLogs();
+    }
+
+    private void RejectProposedAction()
+    {
+        ProposedAction = null;
+    }
+
+    private void LinkArticle(KnowledgeBaseArticle article)
+    {
+        AIService.LinkArticleToCase(CurrentCase, article);
+        SuggestedArticles.Remove(article);
+        StateHasChanged();
+    }
+} *@
