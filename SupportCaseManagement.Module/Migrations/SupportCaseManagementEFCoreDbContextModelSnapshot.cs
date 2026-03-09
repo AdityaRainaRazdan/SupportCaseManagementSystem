@@ -384,9 +384,6 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<string>("AIResponse")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ExecutedPlan")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("GCRecord")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -398,20 +395,16 @@ namespace SupportCaseManagement.Module.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
-                    b.Property<string>("ProposedPlan")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid>("SupportCaseId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("User")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<string>("UserMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ID");
@@ -514,9 +507,8 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<int>("CommentTypes")
                         .HasColumnType("int");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<Guid?>("CreatedByID")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -540,6 +532,8 @@ namespace SupportCaseManagement.Module.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ID");
+
+                    b.HasIndex("CreatedByID");
 
                     b.HasIndex("SupportCaseId");
 
@@ -643,6 +637,12 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<string>("Category")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ChatHistory")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ChatInput")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
@@ -782,7 +782,7 @@ namespace SupportCaseManagement.Module.Migrations
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.AIInteractionLog", b =>
                 {
                     b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportCase", "Case")
-                        .WithMany()
+                        .WithMany("AIInteractionLogs")
                         .HasForeignKey("SupportCaseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -814,6 +814,10 @@ namespace SupportCaseManagement.Module.Migrations
 
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.CaseComment", b =>
                 {
+                    b.HasOne("SupportCaseManagement.Module.BusinessObjects.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByID");
+
                     b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportCase", "Case")
                         .WithMany("Comments")
                         .HasForeignKey("SupportCaseId")
@@ -821,6 +825,8 @@ namespace SupportCaseManagement.Module.Migrations
                         .IsRequired();
 
                     b.Navigation("Case");
+
+                    b.Navigation("CreatedBy");
                 });
 
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.CaseKnowledgeLink", b =>
@@ -870,6 +876,8 @@ namespace SupportCaseManagement.Module.Migrations
 
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.SupportCase", b =>
                 {
+                    b.Navigation("AIInteractionLogs");
+
                     b.Navigation("ActionHistory");
 
                     b.Navigation("Comments");

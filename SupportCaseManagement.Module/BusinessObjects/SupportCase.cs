@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Xpo;
@@ -74,11 +75,11 @@ namespace SupportCaseManagement.Module.BusinessObjects
         //[Key]
         //public virtual int Id { get; set; }
 
-        [Required, StringLength(50)]
+        [System.ComponentModel.DataAnnotations.Required, StringLength(50)]
 
         public virtual string CaseNumber { get; set; } // Auto-generated
 
-        [Required, StringLength(200)]
+        [System.ComponentModel.DataAnnotations.Required, StringLength(200)]
         public virtual string Title { get; set; }
 
         public virtual string Description { get; set; }
@@ -104,7 +105,14 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public virtual DateTime? DueDate { get; set; }
         [NonPersistent]
         [Size(SizeAttribute.Unlimited)]
+        [ModelDefault("RowCount", "6")]
+
         public virtual string ChatInput { get; set; }
+
+        [Size(SizeAttribute.Unlimited)]
+        [ModelDefault("RowCount", "12")]
+        [ModelDefault("AllowEdit", "False")]
+        public virtual string ChatHistory { get; set; }
 
         [NotMapped]
         public virtual bool IsOverdue => DueDate.HasValue && DateTime.UtcNow > DueDate.Value;
@@ -115,7 +123,7 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public virtual ICollection<CaseActionHistory> ActionHistory { get; set; }
 
         [DevExpress.Xpo.Association("SupportCase-AIInteractionLogs")]
-        public virtual ICollection<AIInteractionLog> AIInteractionLogs { get; set; } 
+        public virtual ObservableCollection<AIInteractionLog> AIInteractionLogs { get; set; }
 
     }
 }

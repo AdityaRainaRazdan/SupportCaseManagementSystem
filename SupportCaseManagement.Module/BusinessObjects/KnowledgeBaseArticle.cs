@@ -1,9 +1,11 @@
-﻿using DevExpress.Persistent.Base;
-using DevExpress.Persistent.BaseImpl.EF;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using DevExpress.ExpressApp.Model;
+using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl.EF;
+using DevExpress.Xpo;
 
 namespace SupportCaseManagement.Module.BusinessObjects
 {
@@ -19,9 +21,11 @@ namespace SupportCaseManagement.Module.BusinessObjects
        // public virtual int Id { get; set; }
  
 
-        [Required, StringLength(200)]
+        [System.ComponentModel.DataAnnotations.Required, StringLength(200)]
         public virtual string Title { get; set; }
 
+        [Size(SizeAttribute.Unlimited)]
+        [ModelDefault("RowCount", "12")]
         public virtual string Content { get; set; }
 
         [StringLength(100)]

@@ -35,6 +35,10 @@ namespace SupportCaseManagement.Module.Controllers
             log.AIResponse = aiReply;
             log.Timestamp = DateTime.Now;
 
+            // Append to chat history
+            supportCase.ChatHistory +=
+                $"\nUser: {userMessage}\nAI: {aiReply}\n";
+
             ObjectSpace.CommitChanges();
 
             supportCase.ChatInput = "";
