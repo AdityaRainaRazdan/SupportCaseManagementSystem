@@ -36,7 +36,7 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public virtual CommentType CommentTypes { get; set; }
 
         [StringLength(100)]
-        public virtual string CreatedBy { get; set; }
+        public virtual ApplicationUser CreatedBy { get; set; }
 
         public virtual DateTime CreatedDate { get; set; }
     }

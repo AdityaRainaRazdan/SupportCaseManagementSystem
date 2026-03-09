@@ -1,24 +1,32 @@
-﻿using DevExpress.Persistent.Base;
-using DevExpress.Persistent.BaseImpl.EF;
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DevExpress.ExpressApp.Model;
+using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl.EF;
+using DevExpress.Xpo;
 
 namespace SupportCaseManagement.Module.BusinessObjects
 {
     [DefaultClassOptions]
     public class CaseActionHistory : BaseObject
     {
+        public CaseActionHistory() 
+        {
+            PerformedBy= Environment.UserName;
+        }
         //[Key]
         //public virtual int Id { get; set; }
 
-        [Required]
+        [System.ComponentModel.DataAnnotations.Required]
         public virtual Guid SupportCaseId { get; set; }
 
         [ForeignKey("SupportCaseId")]
         public virtual SupportCase Case { get; set; }
 
-        [Required, StringLength(100)]
+        [System.ComponentModel.DataAnnotations.Required, StringLength(100)]
+        [Size(SizeAttribute.Unlimited)]
+        [ModelDefault("RowCount", "12")]
         public virtual string ActionType { get; set; } // e.g., StatusChange, PriorityChange
 
         [StringLength(100)]
