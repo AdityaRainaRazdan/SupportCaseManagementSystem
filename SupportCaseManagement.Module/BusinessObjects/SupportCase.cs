@@ -1,10 +1,11 @@
-﻿using DevExpress.Persistent.Base;
-using DevExpress.Persistent.BaseImpl.EF;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl.EF;
+using DevExpress.Xpo;
 
 namespace SupportCaseManagement.Module.BusinessObjects
 {
@@ -101,6 +102,9 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public virtual DateTime CreatedDate { get; set; }
 
         public virtual DateTime? DueDate { get; set; }
+        [NonPersistent]
+        [Size(SizeAttribute.Unlimited)]
+        public virtual string ChatInput { get; set; }
 
         [NotMapped]
         public virtual bool IsOverdue => DueDate.HasValue && DateTime.UtcNow > DueDate.Value;
@@ -109,5 +113,9 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public virtual ICollection<CaseComment> Comments { get; set; }
         public virtual ICollection<CaseKnowledgeLink> KnowledgeLinks { get; set; }
         public virtual ICollection<CaseActionHistory> ActionHistory { get; set; }
+
+        [DevExpress.Xpo.Association("SupportCase-AIInteractionLogs")]
+        public virtual ICollection<AIInteractionLog> AIInteractionLogs { get; set; } 
+
     }
 }

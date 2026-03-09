@@ -21,6 +21,9 @@ namespace SupportCaseManagement.Module.Services
         {
             var apiKey = configuration["OpenAI:ApiKey"];
 
+            if (string.IsNullOrEmpty(apiKey))
+                throw new Exception("OpenAI API key is missing in configuration.");
+
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", apiKey);
 
@@ -29,7 +32,7 @@ namespace SupportCaseManagement.Module.Services
                 model = "gpt-4o-mini",
                 messages = new[]
                 {
-                    new { role = "system", content = "You are a support case assistant." },
+                    new { role = "system", content = "You are an AI assistant helping manage IT support cases. Provide clear troubleshooting steps and suggested actions." },
                     new { role = "user", content = prompt }
                 }
             };
@@ -40,6 +43,12 @@ namespace SupportCaseManagement.Module.Services
                 "https://api.openai.com/v1/chat/completions",
                 new StringContent(json, Encoding.UTF8, "application/json")
             );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"OpenAI API Error: {error}");
+            }
 
             var responseContent = await response.Content.ReadAsStringAsync();
 
