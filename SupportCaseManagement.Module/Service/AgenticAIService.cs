@@ -76,5 +76,42 @@ namespace SupportCaseManagement.Module.Services
 
             return proposal;
         }
+
+        public async Task<string> ChatWithCase(SupportCase supportCase, string message)
+        {
+            message = message.ToLower();
+
+if (message.Contains("analyze"))
+            {
+                var proposal = await AnalyzeCase(supportCase);
+
+                return $@"
+
+AI ANALYSIS
+
+{proposal.Summary}
+
+Suggested Plan
+Priority: {proposal.SuggestedPriority}
+Status: {proposal.SuggestedStatus}
+Team: {proposal.AssignTeam}
+
+Reply with 'apply plan' if you want me to execute it.";
+            }
+
+
+if (message.Contains("apply"))
+            {
+                supportCase.Priority = CasePriority.P1;
+                supportCase.Status = CaseStatus.InProgress;
+
+                return "Plan executed successfully.";
+            }
+
+            return "You can ask me to 'analyze the case' or 'apply plan'.";
+
+
+}
+
     }
 }
