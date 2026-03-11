@@ -5,6 +5,7 @@ using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Persistent.BaseImpl.EF.PermissionPolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using SupportCaseManagement.Module.AIBackend;
 
 namespace SupportCaseManagement.Module.BusinessObjects
 {
@@ -26,7 +27,9 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public DbSet<CaseKnowledgeLink> CaseKnowledgeLinks { get; set; }
         public DbSet<AIInteractionLog> AIInteractionLogs { get; set; }
         public DbSet<CaseActionHistory> CaseActionHistories{ get; set; }
-        
+        public DbSet<SupportTeam> SupportTeams { get; set; }
+        //public DbSet<SupportCaseAIChatSession> supportCaseAIChatSessions { get; set; }
+        //public DbSet<AIChatMessage> AIChatMessages { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

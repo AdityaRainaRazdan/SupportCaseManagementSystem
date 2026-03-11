@@ -1,4 +1,10 @@
-﻿@{
+﻿@using DevExpress.Blazor
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using DevExpress.ExpressApp.Blazor
+@using DevExpress.Blazor.Internal
+
+@{
     DxResourceManager.RegisterScripts();
 }
 <Router AppAssembly="@typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(DevExpress.ExpressApp.Blazor.BlazorApplication).Assembly }">

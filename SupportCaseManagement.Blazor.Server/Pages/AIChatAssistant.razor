@@ -1,0 +1,838 @@
+﻿@using Microsoft.JSInterop
+@using SupportCaseManagement.Module.BusinessObjects
+@using SupportCaseManagement.Module.AIBackend
+@using SupportCaseManagement.Module.DTO
+@using SupportCaseManagement.Module.Services
+@using Microsoft.AspNetCore.Components.Web
+@using DevExpress.ExpressApp
+@inject IObjectSpaceFactory ObjectSpaceFactory
+@inject AgenticAIService AiService
+@inject IJSRuntime JS
+
+<style>
+    :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --surface2: #22263a;
+        --border: #2e3248;
+        --accent: #4f8ef7;
+        --accent2: #7c3aed;
+        --user-bubble: #1d4ed8;
+        --ai-bubble: #1e2235;
+        --ai-plan-bubble: #14532d;
+        --text: #e8eaf6;
+        --text-dim: #6b7280;
+        --text-muted: #9ca3af;
+        --success: #22c55e;
+        --radius: 18px;
+        --radius-sm: 10px;
+        --font: 'Segoe UI',system-ui,sans-serif;
+    }
+
+    .ai-root {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .ai-header {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-shrink: 0;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .ai-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,var(--accent),var(--accent2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .ai-header-info h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mode-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: var(--surface2);
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        font-weight: 400;
+    }
+
+        .mode-badge.active {
+            background: #1e3a5f;
+            color: #93c5fd;
+            border-color: #2563eb;
+        }
+
+    .status {
+        font-size: 12px;
+        color: var(--success);
+    }
+
+        .status.idle {
+            color: var(--text-dim);
+        }
+
+    .case-bar {
+        background: var(--surface2);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+        .case-bar label {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+    .case-select {
+        flex: 1;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 7px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        outline: none;
+        cursor: pointer;
+    }
+
+        .case-select:focus {
+            border-color: var(--accent);
+        }
+
+    .btn-analyze {
+        background: linear-gradient(135deg,var(--accent),var(--accent2));
+        color: white;
+        border: none;
+        padding: 7px 16px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+        .btn-analyze:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+    .btn-clear {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        padding: 7px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+        .btn-clear:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+    .chat-win {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+        .chat-win::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-win::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+    .brow {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+        .brow.user {
+            justify-content: flex-end;
+        }
+
+        .brow.ai {
+            justify-content: flex-start;
+        }
+
+    .bicon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,var(--accent),var(--accent2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .bubble {
+        max-width: 72%;
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        font-size: 13.5px;
+        line-height: 1.6;
+        word-break: break-word;
+        white-space: pre-wrap;
+    }
+
+        .bubble.user {
+            background: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bubble.ai {
+            background: var(--ai-bubble);
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .bubble.plan {
+            background: var(--ai-plan-bubble);
+            border-bottom-left-radius: 4px;
+            border: 1px solid #166534;
+            max-width: 80%;
+        }
+
+        .bubble.sys {
+            background: var(--surface2);
+            color: var(--text-muted);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            max-width: 100%;
+            text-align: center;
+            align-self: center;
+            padding: 6px 16px;
+        }
+
+    .btime {
+        font-size: 10px;
+        color: var(--text-dim);
+        margin-top: 4px;
+        text-align: right;
+    }
+
+    .brow.ai .btime {
+        text-align: left;
+    }
+
+    .plan-card {
+        margin-top: 8px;
+        padding: 10px 12px;
+        background: rgba(0,0,0,.25);
+        border-radius: var(--radius-sm);
+    }
+
+        .plan-card h4 {
+            margin: 0 0 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--success);
+        }
+
+    .plan-row {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 4px;
+        align-items: baseline;
+    }
+
+    .plan-lbl {
+        font-size: 11px;
+        color: var(--text-muted);
+        min-width: 80px;
+        text-transform: uppercase;
+    }
+
+    .plan-val {
+        font-size: 13px;
+        color: var(--text);
+        font-weight: 500;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-p1 {
+        background: #7f1d1d;
+        color: #fca5a5;
+    }
+
+    .badge-p2 {
+        background: #78350f;
+        color: #fcd34d;
+    }
+
+    .badge-p3 {
+        background: #1e3a5f;
+        color: #93c5fd;
+    }
+
+    .badge-s {
+        background: #1e3a5f;
+        color: #93c5fd;
+    }
+
+    .btn-apply {
+        margin-top: 12px;
+        width: 100%;
+        background: var(--success);
+        color: white;
+        border: none;
+        padding: 8px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .btn-apply:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+    .typing {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+    }
+
+    .tdots {
+        display: flex;
+        gap: 4px;
+        background: var(--ai-bubble);
+        border: 1px solid var(--border);
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        border-bottom-left-radius: 4px;
+    }
+
+        .tdots span {
+            width: 7px;
+            height: 7px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: tdB 1.2s infinite;
+        }
+
+            .tdots span:nth-child(2) {
+                animation-delay: .2s;
+            }
+
+            .tdots span:nth-child(3) {
+                animation-delay: .4s;
+            }
+
+    .empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: var(--text-dim);
+        text-align: center;
+        padding: 40px;
+    }
+
+        .empty .ico {
+            font-size: 52px;
+            opacity: .35;
+        }
+
+        .empty p {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .empty small {
+            font-size: 12px;
+            opacity: .6;
+            max-width: 320px;
+            line-height: 1.6;
+        }
+
+    .suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 4px;
+    }
+
+    .sug-btn {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+        .sug-btn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+    .input-bar {
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 12px 16px;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-shrink: 0;
+        border-radius: 0 0 8px 8px;
+    }
+
+    .chat-ta {
+        flex: 1;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 22px;
+        font-size: 13.5px;
+        font-family: var(--font);
+        resize: none;
+        outline: none;
+        min-height: 42px;
+        max-height: 120px;
+        overflow-y: auto;
+        line-height: 1.5;
+    }
+
+        .chat-ta:focus {
+            border-color: var(--accent);
+        }
+
+        .chat-ta::placeholder {
+            color: var(--text-dim);
+        }
+
+    .btn-send {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,var(--accent),var(--accent2));
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+        .btn-send:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+
+    .err {
+        background: #7f1d1d;
+        color: #fca5a5;
+        padding: 8px 14px;
+        font-size: 12px;
+        text-align: center;
+        border-radius: var(--radius-sm);
+        margin: 0 20px 8px;
+    }
+</style>
+
+<script>
+    (function(){
+        if(document.getElementById('aicss'))return;
+        var s=document.createElement('style');s.id='aicss';
+        s.textContent='@@keyframes tdB{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}';
+        document.head.appendChild(s);
+    })();
+</script>
+
+<div class="ai-root">
+    <div class="ai-header">
+        <div class="ai-avatar">🤖</div>
+        <div class="ai-header-info">
+            <h3>
+                AI Support Assistant
+                <span class="mode-badge @(SelectedCase != null ? "active" : "")">
+                    @(SelectedCase != null ? $"📁 {SelectedCase.CaseNumber}" : "General Chat")
+                </span>
+            </h3>
+            <span class="status @(IsTyping ? "" : "idle")">@(IsTyping ? "typing..." : "online")</span>
+        </div>
+    </div>
+
+    <div class="case-bar">
+        <label>📁 Case</label>
+        <select class="case-select" @onchange="OnCaseSelected" disabled="@IsTyping">
+            <option value="">— General chat —</option>
+            @foreach (var c in AllCases)
+            {
+                <option value="@c.ID">@c.CaseNumber — @c.Title (@c.Status / @c.Priority)</option>
+            }
+        </select>
+        <button class="btn-analyze" @onclick="AnalyzeSelectedCase" disabled="@(SelectedCase == null || IsTyping)">
+            🔍 Analyze
+        </button>
+        <button class="btn-clear" @onclick="ClearChat">Clear</button>
+    </div>
+
+    <div class="chat-win" id="chatWindow">
+        @if (Messages.Count == 0)
+        {
+            <div class="empty">
+                <div class="ico">🤖</div>
+                <p>Hi! I'm your AI Support Assistant</p>
+                <small>
+                    I know about all your support cases. Ask me anything or select a case to analyze it.
+                    @if (AllCases.Any())
+                    {
+                        <span> I currently see <strong>@AllCases.Count cases</strong> in your system.</span>
+                    }
+                </small>
+                <div class="suggestions">
+                    <button class="sug-btn" @onclick='() => QuickSend("Show me a summary of all open cases")'>Show all open cases</button>
+                    <button class="sug-btn" @onclick='() => QuickSend("Which cases are overdue or high priority?")'>Which cases are urgent?</button>
+                    <button class="sug-btn" @onclick='() => QuickSend("What makes a good P1 case?")'>What makes a P1 case?</button>
+                    <button class="sug-btn" @onclick='() => QuickSend("How should I triage a new support case?")'>How to triage a case?</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var msg in Messages)
+            {
+                @if (msg.IsSystem)
+                {
+                    <div class="bubble sys">@msg.Text</div>
+                }
+                else
+                {
+                    <div class="brow @(msg.IsAI ? "ai" : "user")">
+                        @if (msg.IsAI)
+                        {
+                            <div class="bicon">🤖</div>
+                        }
+                        <div>
+                            @if (msg.IsPlan && msg.Plan != null)
+                            {
+                                <div class="bubble plan">
+                                    <div>📊 <strong>@msg.Text</strong></div>
+                                    <div class="plan-card">
+                                        <h4>Suggested Plan</h4>
+                                        <div class="plan-row"><span class="plan-lbl">Priority</span><span class="badge badge-@(msg.Plan.SuggestedPriority?.ToLower() ?? "p3")">@(msg.Plan.SuggestedPriority ?? "—")</span></div>
+                                        <div class="plan-row"><span class="plan-lbl">Status</span><span class="badge badge-s">@(msg.Plan.SuggestedStatus ?? "—")</span></div>
+                                        <div class="plan-row"><span class="plan-lbl">Team</span><span class="plan-val">@(msg.Plan.AssignTeam ?? "—")</span></div>
+                                        @if (msg.Plan.SuggestedKBArticle?.Any() == true)
+                                        {
+                                            <div class="plan-row"><span class="plan-lbl">KB Articles</span><span class="plan-val">@string.Join(", ", msg.Plan.SuggestedKBArticle)</span></div>
+                                        }
+                                        <div class="plan-row" style="margin-top:8px;"><span class="plan-lbl">Reasoning</span><span class="plan-val" style="font-size:12px;color:var(--text-muted)">@msg.Plan.Reasoning</span></div>
+                                        <button class="btn-apply" @onclick="() => ApplyPlan(msg.Plan, msg.CaseId)" disabled="@msg.PlanApplied">
+                                            @(msg.PlanApplied ? "✅ Plan Applied" : "⚡ Apply This Plan")
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="bubble @(msg.IsAI ? "ai" : "user")">@msg.Text</div>
+                            }
+                            <div class="btime">@msg.Timestamp.ToString("HH:mm")</div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+        @if (IsTyping)
+        {
+            <div class="typing">
+                <div class="bicon">🤖</div>
+                <div class="tdots"><span></span><span></span><span></span></div>
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="err">⚠️ @ErrorMessage</div>
+    }
+
+    <div class="input-bar">
+        <textarea class="chat-ta" @bind="UserInput" @bind:event="oninput" @onkeydown="HandleEnter"
+                  placeholder="@(SelectedCase != null ? $"Ask about {SelectedCase.CaseNumber} or anything else..." : "Ask me anything about your cases...")"
+                  disabled="@IsTyping" rows="1"></textarea>
+        <button class="btn-send" @onclick="SendMessage" disabled="@(string.IsNullOrWhiteSpace(UserInput) || IsTyping)">
+            &#10148;
+        </button>
+    </div>
+</div>
+
+@code {
+    private List<SupportCase> AllCases = new();
+    private SupportCase SelectedCase;
+    private string UserInput = "";
+    private bool IsTyping = false;
+    private string ErrorMessage = "";
+    private List<ChatBubble> Messages = new();
+    private List<ConversationMessage> ConversationHistory = new();
+
+    protected override void OnInitialized()
+    {
+        LoadCases();
+    }
+
+    // ✅ Use IObjectSpaceFactory — correctly registered by XAF
+    private IObjectSpace OpenObjectSpace(Type type)
+    {
+        return ObjectSpaceFactory.CreateObjectSpace(type);
+    }
+
+    private void LoadCases()
+    {
+        try
+        {
+            using var os = OpenObjectSpace(typeof(SupportCase));
+            AllCases = os.GetObjectsQuery<SupportCase>()
+                         .OrderByDescending(c => c.CreatedDate)
+                         .ToList();
+        }
+        catch (Exception ex) { ErrorMessage = "Could not load cases: " + ex.Message; }
+    }
+
+    // Build a compact summary of ALL cases to give the AI awareness of your data
+    private string BuildCasesContext()
+    {
+        if (!AllCases.Any()) return "No cases found in the system.";
+        var lines = AllCases.Select(c =>
+            $"- [{c.CaseNumber}] \"{c.Title}\" | Status:{c.Status} | Priority:{c.Priority} | Created:{c.CreatedDate:yyyy-MM-dd}"
+        );
+        return "Current cases in the system:\n" + string.Join("\n", lines);
+    }
+
+    private void OnCaseSelected(ChangeEventArgs e)
+    {
+        ErrorMessage = "";
+        var idStr = e.Value?.ToString();
+        if (string.IsNullOrEmpty(idStr))
+        {
+            SelectedCase = null;
+            AddSystemMessage("Switched to General Chat mode");
+            return;
+        }
+        if (Guid.TryParse(idStr, out var id))
+        {
+            try
+            {
+                using var os = OpenObjectSpace(typeof(SupportCase));
+                SelectedCase = os.GetObjectsQuery<SupportCase>().FirstOrDefault(c => c.ID == id);
+                if (SelectedCase != null)
+                    AddSystemMessage($"📁 Switched to case: {SelectedCase.CaseNumber} — {SelectedCase.Title} | {SelectedCase.Status} / {SelectedCase.Priority}");
+            }
+            catch (Exception ex) { ErrorMessage = "Could not load case: " + ex.Message; }
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(UserInput)) return;
+        var msg = UserInput.Trim();
+        UserInput = ""; ErrorMessage = "";
+        Messages.Add(new ChatBubble { Text = msg, IsAI = false, Timestamp = DateTime.Now });
+        IsTyping = true; await ScrollToBottom(); StateHasChanged();
+
+        try
+        {
+            string reply;
+            if (SelectedCase != null)
+            {
+                // Case-aware: pass full case details
+                reply = await AiService.ChatWithCase(SelectedCase, msg);
+            }
+            else
+            {
+                // ✅ Free chat WITH case context — AI knows about all your cases
+                var historyWithContext = new List<ConversationMessage>
+                {
+                    new ConversationMessage
+                    {
+                        Role = "system_context",
+                        Content = BuildCasesContext()
+                    }
+                };
+                historyWithContext.AddRange(ConversationHistory);
+                reply = await AiService.Chat(msg, historyWithContext);
+
+                ConversationHistory.Add(new ConversationMessage { Role = "user", Content = msg });
+                ConversationHistory.Add(new ConversationMessage { Role = "assistant", Content = reply });
+                if (ConversationHistory.Count > 20)
+                    ConversationHistory = ConversationHistory.Skip(ConversationHistory.Count - 20).ToList();
+            }
+
+            Messages.Add(new ChatBubble { Text = reply, IsAI = true, Timestamp = DateTime.Now });
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Chat error: " + ex.Message;
+            Messages.Add(new ChatBubble { Text = "Sorry, I couldn't connect to the AI service. Is FastAPI running on port 8000?", IsAI = true, Timestamp = DateTime.Now });
+        }
+        finally { IsTyping = false; StateHasChanged(); await ScrollToBottom(); }
+    }
+
+    private async Task QuickSend(string text)
+    {
+        UserInput = text;
+        await SendMessage();
+    }
+
+    private async Task AnalyzeSelectedCase()
+    {
+        if (SelectedCase == null) return;
+        ErrorMessage = "";
+        Messages.Add(new ChatBubble { Text = $"Analyze case {SelectedCase.CaseNumber}", IsAI = false, Timestamp = DateTime.Now });
+        IsTyping = true; await ScrollToBottom(); StateHasChanged();
+        try
+        {
+            var proposal = await AiService.AnalyzeCase(SelectedCase);
+            Messages.Add(new ChatBubble
+            {
+                Text = proposal.Summary,
+                IsAI = true,
+                IsPlan = true,
+                Plan = proposal,
+                CaseId = SelectedCase.ID,
+                Timestamp = DateTime.Now
+            });
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Analysis error: " + ex.Message;
+            Messages.Add(new ChatBubble { Text = "Sorry, I couldn't analyze this case.", IsAI = true, Timestamp = DateTime.Now });
+        }
+        finally { IsTyping = false; StateHasChanged(); await ScrollToBottom(); }
+    }
+
+    private async Task ApplyPlan(AIActionProposal proposal, Guid caseId)
+    {
+        if (proposal == null) return;
+        try
+        {
+            using var os = OpenObjectSpace(typeof(SupportCase));
+            var c = os.GetObjectsQuery<SupportCase>().FirstOrDefault(x => x.ID == caseId);
+            if (c != null)
+            {
+                if (Enum.TryParse<CasePriority>(proposal.SuggestedPriority, true, out var p)) c.Priority = p;
+                if (Enum.TryParse<CaseStatus>(proposal.SuggestedStatus, true, out var s)) c.Status = s;
+                var log = os.CreateObject<AIInteractionLog>();
+                log.Case = c; log.UserMessage = "Apply AI Plan";
+                log.AIResponse = $"Priority:{proposal.SuggestedPriority}, Status:{proposal.SuggestedStatus}, Team:{proposal.AssignTeam}";
+                log.AIModel = "gpt-4o-mini"; log.PlanApplied = true; log.Timestamp = DateTime.UtcNow;
+                os.CommitChanges();
+
+                // Refresh cases list so status shows updated
+                LoadCases();
+            }
+            var bubble = Messages.LastOrDefault(m => m.IsPlan && m.Plan == proposal);
+            if (bubble != null) bubble.PlanApplied = true;
+            Messages.Add(new ChatBubble
+            {
+                Text = $"✅ Plan applied! Priority → {proposal.SuggestedPriority}, Status → {proposal.SuggestedStatus}, Team → {proposal.AssignTeam ?? "not changed"}",
+                IsAI = true,
+                Timestamp = DateTime.Now
+            });
+            StateHasChanged(); await ScrollToBottom();
+        }
+        catch (Exception ex) { ErrorMessage = "Could not apply plan: " + ex.Message; }
+    }
+
+    private void AddSystemMessage(string text)
+    {
+        Messages.Add(new ChatBubble { Text = text, IsSystem = true, Timestamp = DateTime.Now });
+        StateHasChanged();
+    }
+
+    private void ClearChat()
+    {
+        Messages.Clear();
+        ConversationHistory.Clear();
+        ErrorMessage = "";
+        StateHasChanged();
+    }
+
+    private async Task HandleEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey) await SendMessage();
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try { await JS.InvokeVoidAsync("eval", "var el=document.getElementById('chatWindow');if(el)el.scrollTop=el.scrollHeight;"); }
+        catch { }
+    }
+
+    private class ChatBubble
+    {
+        public string Text { get; set; }
+        public bool IsAI { get; set; }
+        public bool IsSystem { get; set; }
+        public bool IsPlan { get; set; }
+        public bool PlanApplied { get; set; }
+        public AIActionProposal Plan { get; set; }
+        public Guid CaseId { get; set; }
+        public DateTime Timestamp { get; set; } = DateTime.Now;
+    }
+}

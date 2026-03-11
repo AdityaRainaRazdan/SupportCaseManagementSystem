@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DevExpress.ExpressApp.Editors;
 using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Xpo;
+using SupportCaseManagement.Module.AIBackend;
 
 namespace SupportCaseManagement.Module.BusinessObjects
 {
@@ -95,23 +97,26 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public virtual string CreatedBy { get; set; }
 
         [StringLength(100)]
-        public virtual string AssignedTo { get; set; }
+        public virtual ApplicationUser AssignedTo { get; set; }
 
         [StringLength(100)]
-        public virtual string AssignedTeam { get; set; }
+        public virtual SupportTeam AssignedTeam { get; set; }
 
         public virtual DateTime CreatedDate { get; set; }
 
         public virtual DateTime? DueDate { get; set; }
+
         [NonPersistent]
         [Size(SizeAttribute.Unlimited)]
+        [EditorAlias(EditorAliases.RichTextPropertyEditor)]
         [ModelDefault("RowCount", "6")]
-
         public virtual string ChatInput { get; set; }
 
-        [Size(SizeAttribute.Unlimited)]
-        [ModelDefault("RowCount", "12")]
-        [ModelDefault("AllowEdit", "False")]
+        [MaxLength]
+        [EditorAlias(EditorAliases.RichTextPropertyEditor)]
+        //[ModelDefault("AllowHtml", "True")]
+        [ModelDefault("RowCount", "25")]
+        //[ModelDefault("AllowEdit", "False")]
         public virtual string ChatHistory { get; set; }
 
         [NotMapped]
