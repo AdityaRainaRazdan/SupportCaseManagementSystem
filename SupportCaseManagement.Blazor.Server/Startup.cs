@@ -114,6 +114,7 @@ namespace SupportCaseManagement.Blazor.Server
                 //                });
 
                 builder.Services.AddScoped<AIService>();
+                builder.Services.AddScoped<AgenticAIService>();
             });
             var authentication = services.AddAuthentication(options =>
             {

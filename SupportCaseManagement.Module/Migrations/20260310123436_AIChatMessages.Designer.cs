@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SupportCaseManagement.Module.BusinessObjects;
 
@@ -11,9 +12,11 @@ using SupportCaseManagement.Module.BusinessObjects;
 namespace SupportCaseManagement.Module.Migrations
 {
     [DbContext(typeof(SupportCaseManagementEFCoreDbContext))]
-    partial class SupportCaseManagementEFCoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310123436_AIChatMessages")]
+    partial class AIChatMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -434,6 +437,9 @@ namespace SupportCaseManagement.Module.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsAI")
                         .HasColumnType("bit");
 
@@ -744,6 +750,9 @@ namespace SupportCaseManagement.Module.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
 
                     b.Property<int>("OptimisticLockField")
                         .IsConcurrencyToken()

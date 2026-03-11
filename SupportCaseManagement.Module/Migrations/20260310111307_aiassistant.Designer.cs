@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SupportCaseManagement.Module.BusinessObjects;
 
@@ -11,9 +12,11 @@ using SupportCaseManagement.Module.BusinessObjects;
 namespace SupportCaseManagement.Module.Migrations
 {
     [DbContext(typeof(SupportCaseManagementEFCoreDbContext))]
-    partial class SupportCaseManagementEFCoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310111307_aiassistant")]
+    partial class aiassistant
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -404,6 +407,9 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<bool>("PlanApplied")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("SessionID")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("SupportCaseId")
                         .HasColumnType("uniqueidentifier");
 
@@ -418,12 +424,14 @@ namespace SupportCaseManagement.Module.Migrations
 
                     b.HasKey("ID");
 
+                    b.HasIndex("SessionID");
+
                     b.HasIndex("SupportCaseId");
 
                     b.ToTable("AIInteractionLogs");
                 });
 
-            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.AIChatMessage", b =>
+            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.AIAssistantSession", b =>
                 {
                     b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
@@ -434,29 +442,18 @@ namespace SupportCaseManagement.Module.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
-                    b.Property<bool>("IsAI")
-                        .HasColumnType("bit");
-
                     b.Property<int>("OptimisticLockField")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
-                    b.Property<Guid?>("SessionID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Text")
+                    b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("ID");
 
-                    b.HasIndex("SessionID");
-
-                    b.ToTable("AIChatMessages");
+                    b.ToTable("AIAssistantSession");
                 });
 
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.ApplicationUserLoginInfo", b =>
@@ -731,39 +728,6 @@ namespace SupportCaseManagement.Module.Migrations
                     b.ToTable("SupportCases");
                 });
 
-            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.SupportCaseAIChatSession", b =>
-                {
-                    b.Property<Guid>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("GCRecord")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<int>("OptimisticLockField")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<Guid?>("RelatedCaseID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("SessionName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("RelatedCaseID");
-
-                    b.ToTable("supportCaseAIChatSessions");
-                });
-
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.SupportTeam", b =>
                 {
                     b.Property<Guid>("ID")
@@ -895,6 +859,10 @@ namespace SupportCaseManagement.Module.Migrations
 
             modelBuilder.Entity("SupportCaseManagement.Module.AIBackend.AIInteractionLog", b =>
                 {
+                    b.HasOne("SupportCaseManagement.Module.BusinessObjects.AIAssistantSession", "Session")
+                        .WithMany()
+                        .HasForeignKey("SessionID");
+
                     b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportCase", "Case")
                         .WithMany("AIInteractionLogs")
                         .HasForeignKey("SupportCaseId")
@@ -902,14 +870,6 @@ namespace SupportCaseManagement.Module.Migrations
                         .IsRequired();
 
                     b.Navigation("Case");
-                });
-
-            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.AIChatMessage", b =>
-                {
-                    b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportCaseAIChatSession", "Session")
-                        .WithMany("Messages")
-                        .HasForeignKey("SessionID")
-                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Session");
                 });
@@ -987,15 +947,6 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Navigation("AssignedTo");
                 });
 
-            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.SupportCaseAIChatSession", b =>
-                {
-                    b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportCase", "RelatedCase")
-                        .WithMany()
-                        .HasForeignKey("RelatedCaseID");
-
-                    b.Navigation("RelatedCase");
-                });
-
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.ApplicationUser", b =>
                 {
                     b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportTeam", null)
@@ -1038,11 +989,6 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("KnowledgeLinks");
-                });
-
-            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.SupportCaseAIChatSession", b =>
-                {
-                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.SupportTeam", b =>

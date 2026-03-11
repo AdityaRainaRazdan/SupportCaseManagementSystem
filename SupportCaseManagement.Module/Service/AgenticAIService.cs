@@ -1,70 +1,53 @@
 ﻿using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using SupportCaseManagement.Module.DTO;
-using SupportCaseManagement.Module.BusinessObjects;
-using SupportCaseManagement.Module.AI;
 using SupportCaseManagement.Module.AIBackend;
-using DevExpress.Data.Exceptions;
+using SupportCaseManagement.Module.BusinessObjects;
+using SupportCaseManagement.Module.DTO;
 
 namespace SupportCaseManagement.Module.Services
 {
     public class AgenticAIService
     {
-        private readonly HttpClient httpClient;
+        private readonly HttpClient _httpClient;
+
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public AgenticAIService()
         {
-            httpClient = new HttpClient();
+            _httpClient = new HttpClient();
         }
 
+        // ── Analyze a case → returns structured plan ──────────────────────────
         public async Task<AIActionProposal> AnalyzeCase(SupportCase supportCase)
         {
-            var httpClient = new HttpClient();
-
             var request = new
             {
                 title = supportCase.Title,
                 description = supportCase.Description,
                 status = supportCase.Status.ToString(),
                 priority = supportCase.Priority.ToString(),
-                comments = supportCase.Comments?.Select(c => c.Text).ToList(),
-                kb_articles = supportCase.KnowledgeLinks?.Select(k => k.Article?.Title).ToList()
+                comments = supportCase.Comments?.Select(c => c.Text).ToList() ?? new List<string>(),
+                kb_articles = supportCase.KnowledgeLinks?.Select(k => k.Article?.Title).ToList() ?? new List<string>()
             };
 
-            var jsonRequest = JsonSerializer.Serialize(request);
-
-            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync(
+            var response = await _httpClient.PostAsync(
                 "http://127.0.0.1:8000/analyze-case",
-                content
+                new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json")
             );
 
-            var responseJson = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine("AI RESPONSE:");
-            Console.WriteLine(responseJson);
-
+            var json = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
-                throw new Exception("AI service error: " + responseJson);
+                throw new Exception("AI service error: " + json);
 
             AIResponse aiResponse;
+            try { aiResponse = JsonSerializer.Deserialize<AIResponse>(json, JsonOptions); }
+            catch { throw new Exception("Invalid AI JSON response: " + json); }
 
-            try
-            {
-                aiResponse = JsonSerializer.Deserialize<AIResponse>(
-                    responseJson,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                );
-            }
-            catch
-            {
-                throw new Exception("Invalid AI JSON response: " + responseJson);
-            }
-
-            // 🔹 Convert AIResponse → AIActionProposal
-            var proposal = new AIActionProposal
+            return new AIActionProposal
             {
                 Summary = aiResponse.summary,
                 SuggestedPriority = aiResponse.plan?.priority,
@@ -73,45 +56,69 @@ namespace SupportCaseManagement.Module.Services
                 SuggestedKBArticle = aiResponse.plan?.kb_articles ?? new List<string>(),
                 Reasoning = aiResponse.reasoning
             };
-
-            return proposal;
         }
 
+        // ── Chat about a specific case ────────────────────────────────────────
         public async Task<string> ChatWithCase(SupportCase supportCase, string message)
         {
-            message = message.ToLower();
-
-if (message.Contains("analyze"))
+            var request = new
             {
-                var proposal = await AnalyzeCase(supportCase);
+                message = message,
+                title = supportCase.Title,
+                description = supportCase.Description,
+                status = supportCase.Status.ToString(),
+                priority = supportCase.Priority.ToString(),
+                comments = supportCase.Comments?.Select(c => c.Text).ToList() ?? new List<string>(),
+                kb_articles = supportCase.KnowledgeLinks?.Select(k => k.Article?.Title).ToList() ?? new List<string>()
+            };
 
-                return $@"
+            var response = await _httpClient.PostAsync(
+                "http://127.0.0.1:8000/chat-case",
+                new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json")
+            );
 
-AI ANALYSIS
-
-{proposal.Summary}
-
-Suggested Plan
-Priority: {proposal.SuggestedPriority}
-Status: {proposal.SuggestedStatus}
-Team: {proposal.AssignTeam}
-
-Reply with 'apply plan' if you want me to execute it.";
-            }
-
-
-if (message.Contains("apply"))
+            var json = await response.Content.ReadAsStringAsync();
+            try
             {
-                supportCase.Priority = CasePriority.P1;
-                supportCase.Status = CaseStatus.InProgress;
-
-                return "Plan executed successfully.";
+                var parsed = JsonSerializer.Deserialize<ChatReply>(json, JsonOptions);
+                return parsed?.Reply ?? "No reply from AI.";
             }
+            catch { return json; }
+        }
 
-            return "You can ask me to 'analyze the case' or 'apply plan'.";
+        // ✅ Free conversational chat — no case required, supports history
+        public async Task<string> Chat(string message, List<ConversationMessage> history)
+        {
+            var request = new
+            {
+                message = message,
+                history = history.Select(h => new { role = h.Role, content = h.Content }).ToList()
+            };
 
+            var response = await _httpClient.PostAsync(
+                "http://127.0.0.1:8000/chat",
+                new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json")
+            );
 
-}
+            var json = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<ChatReply>(json, JsonOptions);
+                return parsed?.Reply ?? "No reply from AI.";
+            }
+            catch { return json; }
+        }
 
+        private class ChatReply
+        {
+            public string Reply { get; set; }
+        }
+    }
+
+    // Represents one message in conversation history
+    public class ConversationMessage
+    {
+        public string Role { get; set; }    // "user" or "assistant"
+        public string Content { get; set; }
     }
 }
