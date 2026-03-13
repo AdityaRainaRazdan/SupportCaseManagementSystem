@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Editors;
 using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
@@ -41,10 +42,15 @@ namespace SupportCaseManagement.Module.BusinessObjects
             ActionHistory = new ObservableCollection<CaseActionHistory>();
             Title = $"Case {DateTime.UtcNow:yyyyMMddHHmmss}";
             CaseNumber = $"CASE-{DateTime.Now:yyyyMMddHHmmss}";
+            CreatedBy = SecuritySystem.CurrentUserName;
         }
         public override void OnSaving()
         {
             base.OnSaving();
+
+            // Set CreatedByUserId on first save — SecuritySystem is available here
+            if (CreatedByUserId == null && SecuritySystem.CurrentUserId is Guid uid)
+                CreatedByUserId = uid;
 
             DateTime? newDueDate = null;
 
@@ -78,7 +84,7 @@ namespace SupportCaseManagement.Module.BusinessObjects
         //public virtual int Id { get; set; }
 
         [System.ComponentModel.DataAnnotations.Required, StringLength(50)]
-
+        [Editable(false)]
         public virtual string CaseNumber { get; set; } // Auto-generated
 
         [System.ComponentModel.DataAnnotations.Required, StringLength(200)]
@@ -96,15 +102,19 @@ namespace SupportCaseManagement.Module.BusinessObjects
         [StringLength(100)]
         public virtual string CreatedBy { get; set; }
 
-        [StringLength(100)]
+
         public virtual ApplicationUser AssignedTo { get; set; }
 
-        [StringLength(100)]
+
         public virtual SupportTeam AssignedTeam { get; set; }
 
         public virtual DateTime CreatedDate { get; set; }
 
         public virtual DateTime? DueDate { get; set; }
+
+        // Used for object-level security criteria: [CreatedByUserId] = CurrentUserId()
+        [System.ComponentModel.Browsable(true)]
+        public virtual Guid? CreatedByUserId { get; set; }
 
         [NonPersistent]
         [Size(SizeAttribute.Unlimited)]
@@ -120,14 +130,14 @@ namespace SupportCaseManagement.Module.BusinessObjects
         public virtual string ChatHistory { get; set; }
 
         [NotMapped]
-        public virtual bool IsOverdue => DueDate.HasValue && DateTime.UtcNow > DueDate.Value;
+        [System.ComponentModel.Browsable(false)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        public bool IsOverdue => DueDate.HasValue && DateTime.UtcNow > DueDate.Value;
 
         // Navigation properties
         public virtual ICollection<CaseComment> Comments { get; set; }
         public virtual ICollection<CaseKnowledgeLink> KnowledgeLinks { get; set; }
         public virtual ICollection<CaseActionHistory> ActionHistory { get; set; }
-
-        [DevExpress.Xpo.Association("SupportCase-AIInteractionLogs")]
         public virtual ObservableCollection<AIInteractionLog> AIInteractionLogs { get; set; }
 
     }

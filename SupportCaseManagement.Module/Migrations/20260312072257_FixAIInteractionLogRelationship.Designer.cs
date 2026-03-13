@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SupportCaseManagement.Module.BusinessObjects;
 
@@ -11,9 +12,11 @@ using SupportCaseManagement.Module.BusinessObjects;
 namespace SupportCaseManagement.Module.Migrations
 {
     [DbContext(typeof(SupportCaseManagementEFCoreDbContext))]
-    partial class SupportCaseManagementEFCoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260312072257_FixAIInteractionLogRelationship")]
+    partial class FixAIInteractionLogRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -534,9 +537,6 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<Guid?>("CreatedByID")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -672,9 +672,6 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");

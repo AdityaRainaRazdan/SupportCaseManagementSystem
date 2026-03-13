@@ -23,7 +23,7 @@ namespace SupportCaseManagement.Module.DatabaseUpdate
         public override void UpdateDatabaseAfterUpdateSchema()
         {
             base.UpdateDatabaseAfterUpdateSchema();
-            SecurityRoles.SeedRoles(ObjectSpace);
+            SecurityRoles.ResyncRolePermissions(ObjectSpace);
             //string name = "MyName";
             //EntityObject1 theObject = ObjectSpace.FirstOrDefault<EntityObject1>(u => u.Name == name);
             //if(theObject == null) {
