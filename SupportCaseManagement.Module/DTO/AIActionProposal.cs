@@ -1,22 +1,32 @@
-﻿using System.Collections.ObjectModel;
-
-namespace SupportCaseManagement.Module.DTO
+﻿namespace SupportCaseManagement.Module.DTO
 {
     public class AIActionProposal
     {
-        public virtual string Summary { get; set; }
-        public virtual string SuggestedPriority { get; set; }
-        public virtual string SuggestedStatus { get; set; }
-        public virtual string SuggestedTeam { get; set; }
-        public virtual List<string> SuggestedKBArticle { get; set; }
-        public virtual string Explanation { get; set; }
-        public virtual string Priority { get; set; }
+        public string Summary { get; set; } = "";
+        public List<string> NextSteps { get; set; } = new();
 
-        public virtual string Status { get; set; }
+        // Suggested field values
+        public string? SuggestedPriority { get; set; }   // "P1" | "P2" | "P3"
+        public string? SuggestedStatus { get; set; }     // matches CaseStatus enum name
+        public string? AssignTeam { get; set; }          // raw string from AI
 
-        public virtual string AssignTeam { get; set; }
-        public virtual string AssignStatus { get; set; }
-        public virtual string Reasoning { get; set; }
-        public virtual string Plan { get; set; }
+        // Resolved DB entities for team
+        public Guid? MatchedTeamId { get; set; }         // SupportTeam.ID
+        public string? MatchedTeamName { get; set; }     // SupportTeam.Name
+
+        // KB articles — raw names from AI + matched DB records
+        public List<string> SuggestedKBArticle { get; set; } = new();
+        public List<KBMatch> MatchedKBArticles { get; set; } = new();  // articles found in DB
+
+        public string? Reasoning { get; set; }
+        public string? ProposedCustomerMessage { get; set; }
+    }
+
+
+    public class KBMatch
+    {
+        public Guid Id { get; set; }          // KnowledgeBaseArticle.ID (BaseObject.ID)
+        public string Title { get; set; } = "";
+        public string Category { get; set; } = "";
     }
 }

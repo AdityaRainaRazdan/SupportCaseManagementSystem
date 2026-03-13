@@ -1,6 +1,8 @@
 ﻿using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
@@ -13,12 +15,13 @@ namespace SupportCaseManagement.Module.BusinessObjects
     {
         public CaseActionHistory() 
         {
-            PerformedBy= Environment.UserName;
+            PerformedBy= SecuritySystem.CurrentUserName;
         }
         //[Key]
         //public virtual int Id { get; set; }
 
         [System.ComponentModel.DataAnnotations.Required]
+        [Browsable(false)]
         public virtual Guid SupportCaseId { get; set; }
 
         [ForeignKey("SupportCaseId")]

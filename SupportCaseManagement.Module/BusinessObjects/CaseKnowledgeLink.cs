@@ -1,5 +1,6 @@
 ﻿using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -12,12 +13,14 @@ namespace SupportCaseManagement.Module.BusinessObjects
         //public virtual int Id { get; set; }
 
         [Required]
+        [Browsable(false)]
         public virtual Guid SupportCaseId { get; set; }
 
         [ForeignKey("SupportCaseId")]
         public virtual SupportCase Case { get; set; }
 
         [Required]
+        [Browsable(false)]
         public virtual Guid KnowledgeBaseArticleId { get; set; }
 
         [ForeignKey("KnowledgeBaseArticleId")]

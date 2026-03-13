@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SupportCaseManagement.Module.BusinessObjects;
 
@@ -11,9 +12,11 @@ using SupportCaseManagement.Module.BusinessObjects;
 namespace SupportCaseManagement.Module.Migrations
 {
     [DbContext(typeof(SupportCaseManagementEFCoreDbContext))]
-    partial class SupportCaseManagementEFCoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260312034851_currentusername")]
+    partial class currentusername
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,21 +29,6 @@ namespace SupportCaseManagement.Module.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("ApplicationUserSupportTeam", b =>
-                {
-                    b.Property<Guid>("MembersID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("TeamsID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("MembersID", "TeamsID");
-
-                    b.HasIndex("TeamsID");
-
-                    b.ToTable("SupportTeamMembers", (string)null);
-                });
 
             modelBuilder.Entity("DevExpress.Persistent.BaseImpl.EF.ModelDifference", b =>
                 {
@@ -534,9 +522,6 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<Guid?>("CreatedByID")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -673,9 +658,6 @@ namespace SupportCaseManagement.Module.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -762,22 +744,12 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Property<DateTime>("LockoutEnd")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("SupportTeamID")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasIndex("SupportTeamID");
+
                     b.HasDiscriminator().HasValue("ApplicationUser");
-                });
-
-            modelBuilder.Entity("ApplicationUserSupportTeam", b =>
-                {
-                    b.HasOne("SupportCaseManagement.Module.BusinessObjects.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("MembersID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportTeam", null)
-                        .WithMany()
-                        .HasForeignKey("TeamsID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("DevExpress.Persistent.BaseImpl.EF.ModelDifferenceAspect", b =>
@@ -939,6 +911,13 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Navigation("AssignedTo");
                 });
 
+            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.ApplicationUser", b =>
+                {
+                    b.HasOne("SupportCaseManagement.Module.BusinessObjects.SupportTeam", null)
+                        .WithMany("Members")
+                        .HasForeignKey("SupportTeamID");
+                });
+
             modelBuilder.Entity("DevExpress.Persistent.BaseImpl.EF.ModelDifference", b =>
                 {
                     b.Navigation("Aspects");
@@ -974,6 +953,11 @@ namespace SupportCaseManagement.Module.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("KnowledgeLinks");
+                });
+
+            modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.SupportTeam", b =>
+                {
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("SupportCaseManagement.Module.BusinessObjects.ApplicationUser", b =>
