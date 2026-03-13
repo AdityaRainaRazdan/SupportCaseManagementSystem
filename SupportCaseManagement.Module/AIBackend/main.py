@@ -8,6 +8,7 @@ import os, json
 
 app = FastAPI()
 
+os.environ["AZURE_OPENAI_API_KEY"] = ""
 os.environ["AZURE_OPENAI_ENDPOINT"] = "https://axcces-ai.openai.azure.com"
 
 llm = AzureChatOpenAI(
