@@ -91,5 +91,5 @@ publish/
 *.temp
 *.bak
 *.swp
-
+*.pyc
 

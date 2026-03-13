@@ -16,6 +16,9 @@ namespace SupportCaseManagement.Module.BusinessObjects
         [Browsable(false)]
         public virtual DateTime LockoutEnd { get; set; }
 
+        public virtual ICollection<SupportTeam> Teams { get; set; }
+            = new ObservableCollection<SupportTeam>();
+
         [Browsable(false)]
         [NonCloneable]
         [DevExpress.ExpressApp.DC.Aggregated]

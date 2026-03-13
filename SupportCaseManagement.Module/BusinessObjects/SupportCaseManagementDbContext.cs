@@ -46,6 +46,16 @@ namespace SupportCaseManagement.Module.BusinessObjects
                 .HasMany(t => t.Aspects)
                 .WithOne(t => t.Owner)
                 .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<SupportTeam>()
+                .HasMany(t => t.Members)
+                .WithMany(u => u.Teams)
+                .UsingEntity(j => j.ToTable("SupportTeamMembers"));
+            modelBuilder.Entity<AIInteractionLog>()
+                .HasOne(a => a.Case)
+                .WithMany(c => c.AIInteractionLogs)
+                .HasForeignKey(a => a.SupportCaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }
